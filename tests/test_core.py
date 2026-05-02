@@ -9,8 +9,8 @@ from botgateway.core.encryptor import (
     ApiKeyEncryptor,
     ClientApiKeyValidator,
 )
-from botgateway.core.router import CooldownTracker
 from botgateway.core.retry import ErrorRetryHandler, RetryConfig
+from botgateway.core.router import CooldownTracker
 
 
 class TestClientApiKeyValidator:
@@ -213,3 +213,202 @@ class TestErrorRetryHandler:
         handler = ErrorRetryHandler()
         handler.record_error("model-1")
         assert handler.cooldown_tracker.is_in_cooldown("model-1", 60) is True
+
+
+class TestRouterSendRequest:
+    """Test Router.send_request 异步 HTTP 客户端"""
+
+    @pytest.mark.asyncio
+    async def test_router_send_request_is_async(self):
+        """正例: Router.send_request 是异步方法"""
+        from unittest.mock import MagicMock
+
+        from botgateway.core.router import Router
+
+        # Mock Database
+        mock_db = MagicMock()
+
+        router = Router(db=mock_db)
+
+        # 验证 send_request 是异步方法
+        import asyncio
+        assert asyncio.iscoroutinefunction(router.send_request)
+
+    @pytest.mark.asyncio
+    async def test_router_uses_httpx_async_client(self):
+        """正例: Router 使用 httpx.AsyncClient 发送请求"""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from botgateway.core.router import Router
+
+        mock_db = MagicMock()
+        router = Router(db=mock_db)
+
+        # Mock httpx.AsyncClient
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "Hello"}}]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            result = await router.send_request(
+                url="https://api.example.com/v1/chat/completions",
+                headers={"Authorization": "Bearer test-key"},
+                data={"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hi"}]},
+            )
+
+        assert result is not None
+        assert result == {"choices": [{"message": {"content": "Hello"}}]}
+        mock_client.post.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_router_send_request_passes_timeout(self):
+        """正例: Router.send_request 正确传递 timeout 参数"""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from botgateway.core.router import Router
+
+        mock_db = MagicMock()
+        router = Router(db=mock_db)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"choices": []}
+        mock_response.raise_for_status = MagicMock()
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            await router.send_request(
+                url="https://api.example.com/v1/chat/completions",
+                headers={"Authorization": "Bearer test-key"},
+                data={"model": "gpt-3.5-turbo", "messages": []},
+                timeout=60,
+            )
+
+        # 验证 timeout 被传递
+        call_kwargs = mock_client.post.call_args
+        timeout_val = call_kwargs.kwargs.get("timeout")
+        assert timeout_val == 60 or (call_kwargs[1] or {}).get("timeout") == 60
+
+
+class TestSDKAdapterAsync:
+    """Test SDK Adapter 异步客户端"""
+
+    def test_openai_adapter_uses_async_client(self):
+        """正例: OpenAIAdapter._get_client 使用 AsyncOpenAI 而非 OpenAI"""
+        from unittest.mock import MagicMock, patch
+
+        mock_async_client = MagicMock()
+        with patch(
+            "openai.AsyncOpenAI", return_value=mock_async_client
+        ) as mock_cls:
+            from botgateway.core.sdk_adapter import OpenAIAdapter
+            adapter = OpenAIAdapter()
+            from botgateway.db import Provider
+            provider = Provider(
+                id="p1", name="openai", base_url="https://api.openai.com/v1"
+            )
+            result = adapter._get_client(provider, "test-api-key-12345")
+            mock_cls.assert_called_once_with(
+                api_key="test-api-key-12345",
+                base_url="https://api.openai.com/v1",
+            )
+            assert result is mock_async_client
+
+    def test_anthropic_adapter_uses_async_client(self):
+        """正例: AnthropicAdapter._get_client 使用 AsyncAnthropic 而非 Anthropic"""
+        from unittest.mock import MagicMock, patch
+
+        mock_async_client = MagicMock()
+        with patch(
+            "anthropic.AsyncAnthropic", return_value=mock_async_client
+        ) as mock_cls:
+            from botgateway.core.sdk_adapter import AnthropicAdapter
+            adapter = AnthropicAdapter()
+            from botgateway.db import Provider
+            provider = Provider(id="p1", name="anthropic", base_url=None)
+            result = adapter._get_client(provider, "test-api-key-12345")
+            mock_cls.assert_called_once_with(api_key="test-api-key-12345")
+            assert result is mock_async_client
+
+    @pytest.mark.asyncio
+    async def test_openai_chat_completions_uses_await(self):
+        """正例: OpenAIAdapter.chat_completions 内部使用 await 调用客户端"""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from botgateway.core.sdk_adapter import OpenAIAdapter
+
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = {"id": "test", "choices": []}
+
+        mock_completions = AsyncMock()
+        mock_completions.create = AsyncMock(return_value=mock_response)
+
+        mock_chat = MagicMock()
+        mock_chat.completions = mock_completions
+
+        mock_client = MagicMock()
+        mock_client.chat = mock_chat
+
+        with patch.object(OpenAIAdapter, "_get_client", return_value=mock_client):
+            with patch.object(
+                OpenAIAdapter, "_decrypt_api_key", return_value="test-key"
+            ):
+                adapter = OpenAIAdapter()
+                from botgateway.db import Model, Provider
+                provider = Provider(id="p1", name="openai")
+                model = Model(
+                    id="m1", provider_id="p1", name="gpt-3.5-turbo", max_tokens=100
+                )
+                messages = [{"role": "user", "content": "Hi"}]
+                await adapter.chat_completions(provider, model, messages)
+                mock_completions.create.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_anthropic_chat_completions_uses_await(self):
+        """正例: AnthropicAdapter.chat_completions 内部使用 await 调用客户端"""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from botgateway.core.sdk_adapter import AnthropicAdapter
+
+        mock_response = MagicMock()
+        mock_response.id = "test"
+        mock_response.model = "claude-3-sonnet"
+        mock_response.content = [MagicMock(text="Hello")]
+        mock_response.usage = MagicMock(input_tokens=10, output_tokens=20)
+
+        mock_messages = AsyncMock()
+        mock_messages.create = AsyncMock(return_value=mock_response)
+
+        mock_client = MagicMock()
+        mock_client.messages = mock_messages
+
+        with patch.object(
+            AnthropicAdapter, "_get_client", return_value=mock_client
+        ):
+            with patch.object(
+                AnthropicAdapter, "_decrypt_api_key", return_value="test-key"
+            ):
+                adapter = AnthropicAdapter()
+                from botgateway.db import Model, Provider
+                provider = Provider(id="p1", name="anthropic")
+                model = Model(
+                    id="m1",
+                    provider_id="p1",
+                    name="claude-3-sonnet",
+                    max_tokens=100,
+                )
+                messages = [{"role": "user", "content": "Hi"}]
+                await adapter.chat_completions(provider, model, messages)
+                mock_messages.create.assert_called_once()

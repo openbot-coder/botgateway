@@ -3,7 +3,9 @@ from __future__ import annotations
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import httpx
 
 from botgateway.db import (
     Model,
@@ -112,6 +114,34 @@ class Router:
 
         strategy = await self.get_strategy(group.routing_strategy)
         return await strategy.select_model(group, members, cooldown_tracker)
+
+    async def _do_send_request(
+        self,
+        url: str,
+        headers: dict[str, str],
+        data: dict[str, Any],
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """发送 HTTP 请求到上游 API"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url,
+                headers=headers,
+                json=data,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    async def send_request(
+        self,
+        url: str,
+        headers: dict[str, str],
+        data: dict[str, Any],
+        timeout: int = 30,
+    ) -> dict[str, Any]:
+        """发送请求到指定 URL"""
+        return await self._do_send_request(url, headers, data, timeout)
 
 
 class CooldownTracker:

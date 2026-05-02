@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def generate_id() -> str:
@@ -11,7 +11,22 @@ def generate_id() -> str:
 
 
 def now_iso() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_bool(value) -> bool:
+    """Parse a boolean value from various input types.
+
+    Handles integers (0/1), strings ("true"/"false"/"0"/"1"), and actual bools.
+    Fixes the bug where bool("false") returns True.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return bool(value)
+    if isinstance(value, str):
+        return value.lower() in ("true", "1", "yes")
+    return bool(value)
 
 
 @dataclass
@@ -51,7 +66,7 @@ class Provider:
             base_url=data.get("base_url"),
             api_key_encrypted=data.get("api_key_encrypted"),
             key_nonce=data.get("key_nonce"),
-            is_active=bool(data.get("is_active", 1)),
+            is_active=_parse_bool(data.get("is_active", 1)),
             created_at=data["created_at"],
             updated_at=data["updated_at"],
         )
@@ -122,7 +137,7 @@ class Model:
             top_p=data.get("top_p", 1.0),
             timeout=data.get("timeout", 60),
             extra_params=data.get("extra_params"),
-            is_active=bool(data.get("is_active", 1)),
+            is_active=_parse_bool(data.get("is_active", 1)),
             created_at=data["created_at"],
             updated_at=data["updated_at"],
         )
@@ -137,6 +152,7 @@ class ModelGroup:
     retry_count: int = 3
     retry_delay: int = 1
     cooldown_period: int = 60
+    use_count: int = 0
     is_active: bool = True
     created_at: str = field(default_factory=now_iso)
     updated_at: str = field(default_factory=now_iso)
@@ -155,6 +171,10 @@ class ModelGroup:
             cooldown_period=cooldown_period,
         )
 
+    def increment_use_count(self) -> None:
+        """Increment the use_count by 1."""
+        self.use_count += 1
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -164,6 +184,7 @@ class ModelGroup:
             "retry_count": self.retry_count,
             "retry_delay": self.retry_delay,
             "cooldown_period": self.cooldown_period,
+            "use_count": self.use_count,
             "is_active": self.is_active,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -179,7 +200,8 @@ class ModelGroup:
             retry_count=data.get("retry_count", 3),
             retry_delay=data.get("retry_delay", 1),
             cooldown_period=data.get("cooldown_period", 60),
-            is_active=bool(data.get("is_active", 1)),
+            use_count=int(data.get("use_count", 0)),
+            is_active=_parse_bool(data.get("is_active", 1)),
             created_at=data["created_at"],
             updated_at=data["updated_at"],
         )
@@ -256,7 +278,7 @@ class ApiKey:
             id=data["id"],
             name=data["name"],
             api_key_hash=data["api_key_hash"],
-            is_active=bool(data.get("is_active", 1)),
+            is_active=_parse_bool(data.get("is_active", 1)),
             created_at=data["created_at"],
             updated_at=data["updated_at"],
         )

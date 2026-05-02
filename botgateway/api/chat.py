@@ -1,3 +1,5 @@
+import logging
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,7 +16,25 @@ from botgateway.db import (
     ProviderRepository,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(tags=["chat"])
+
+
+@asynccontextmanager
+async def audit_operation(repo, operation_type: str, details: str):
+    """Audit operation context manager.
+
+    Yields control to the caller, then logs the operation.
+    If the audit log write fails, logs a warning instead of raising.
+    """
+    try:
+        yield
+    finally:
+        try:
+            await repo.add_operation_log(operation_type, details)
+        except Exception:
+            logger.warning("Failed to write audit log", exc_info=True)
 
 
 class ChatMessage(BaseModel):

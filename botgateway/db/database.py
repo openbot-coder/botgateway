@@ -105,6 +105,7 @@ class Database:
             retry_count INTEGER NOT NULL DEFAULT 3,
             retry_delay INTEGER NOT NULL DEFAULT 1,
             cooldown_period INTEGER NOT NULL DEFAULT 60,
+            use_count INTEGER NOT NULL DEFAULT 0,
             is_active INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL

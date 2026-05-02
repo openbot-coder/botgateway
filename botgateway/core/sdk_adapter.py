@@ -41,7 +41,7 @@ class OpenAIAdapter(SDKAdapter):
             client_kwargs = {"api_key": api_key}
             if provider.base_url:
                 client_kwargs["base_url"] = provider.base_url
-            self._clients[cache_key] = openai.OpenAI(**client_kwargs)
+            self._clients[cache_key] = openai.AsyncOpenAI(**client_kwargs)
         return self._clients[cache_key]
 
     # UNCOVERED: 需要 mock SDK 客户端，集成测试覆盖
@@ -76,7 +76,7 @@ class OpenAIAdapter(SDKAdapter):
             if model.get_extra_params():
                 request_kwargs.update(model.get_extra_params())
 
-            response = client.chat.completions.create(**request_kwargs)
+            response = await client.chat.completions.create(**request_kwargs)
             return response.model_dump()
         except APIError as e:
             raise SDKError(f"OpenAI API error: {str(e)}") from e
@@ -100,7 +100,7 @@ class OpenAIAdapter(SDKAdapter):
                 "input": input_text,
             }
 
-            response = client.embeddings.create(**request_kwargs)
+            response = await client.embeddings.create(**request_kwargs)
             return response.model_dump()
         except APIError as e:
             raise SDKError(f"OpenAI API error: {str(e)}") from e
@@ -127,7 +127,7 @@ class AnthropicAdapter(SDKAdapter):
             client_kwargs = {"api_key": api_key}
             if provider.base_url:
                 client_kwargs["base_url"] = provider.base_url
-            self._clients[cache_key] = anthropic.Anthropic(**client_kwargs)
+            self._clients[cache_key] = anthropic.AsyncAnthropic(**client_kwargs)
         return self._clients[cache_key]
 
     # UNCOVERED: 需要 mock SDK 客户端，集成测试覆盖
@@ -167,7 +167,7 @@ class AnthropicAdapter(SDKAdapter):
             elif model.top_p:
                 request_kwargs["top_p"] = model.top_p
 
-            response = client.messages.create(**request_kwargs)
+            response = await client.messages.create(**request_kwargs)
 
             return self._convert_response(response)
         except APIError as e:

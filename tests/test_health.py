@@ -1,16 +1,17 @@
 """Test health module"""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 
 from botgateway.api.health import (
-    get_memory_info,
+    PSUTIL_AVAILABLE,
     get_cpu_info,
     get_disk_info,
+    get_memory_info,
     get_network_info,
     get_uptime,
     health_check,
-    PSUTIL_AVAILABLE,
 )
 
 
@@ -155,12 +156,20 @@ class TestHealthCheck:
 
     def _mock_psutil_functions(self):
         """Helper to mock all psutil-dependent functions"""
+        memory_val = {"total": 1, "available": 1, "used": 0, "percent": 0}
+        cpu_val = {"percent": 0, "count": 4, "freq": None}
+        disk_val = {"total": 1, "used": 0, "free": 1, "percent": 0}
+        network_val = {"connections": 0}
+        process_val = {
+            "pid": 1, "name": "test",
+            "memory_percent": 0, "cpu_percent": 0,
+        }
         return [
-            patch('botgateway.api.health.get_memory_info', return_value={"total": 1, "available": 1, "used": 0, "percent": 0}),
-            patch('botgateway.api.health.get_cpu_info', return_value={"percent": 0, "count": 4, "freq": None}),
-            patch('botgateway.api.health.get_disk_info', return_value={"total": 1, "used": 0, "free": 1, "percent": 0}),
-            patch('botgateway.api.health.get_network_info', return_value={"connections": 0}),
-            patch('botgateway.api.health.get_process_info', return_value={"pid": 1, "name": "test", "memory_percent": 0, "cpu_percent": 0}),
+            patch('botgateway.api.health.get_memory_info', return_value=memory_val),
+            patch('botgateway.api.health.get_cpu_info', return_value=cpu_val),
+            patch('botgateway.api.health.get_disk_info', return_value=disk_val),
+            patch('botgateway.api.health.get_network_info', return_value=network_val),
+            patch('botgateway.api.health.get_process_info', return_value=process_val),
             patch('botgateway.api.health.get_uptime', return_value=3600),
         ]
 
@@ -199,7 +208,8 @@ class TestHealthCheck:
 
         mocks = self._mock_psutil_functions()
         with patch('botgateway.api.health.verify_management_token', return_value="token"):
-            with patch('botgateway.api.health.get_memory_info', return_value={"total": 100, "available": 50, "used": 50, "percent": 50}):
+            mem_val = {"total": 100, "available": 50, "used": 50, "percent": 50}
+            with patch('botgateway.api.health.get_memory_info', return_value=mem_val):
                 with mocks[1], mocks[2], mocks[3], mocks[4], mocks[5]:
                     result = await health_check(mock_request)
 
@@ -216,7 +226,8 @@ class TestHealthCheck:
         mocks = self._mock_psutil_functions()
         with patch('botgateway.api.health.verify_management_token', return_value="token"):
             with mocks[0]:
-                with patch('botgateway.api.health.get_cpu_info', return_value={"percent": 25, "count": 4, "freq": None}):
+                cpu_val = {"percent": 25, "count": 4, "freq": None}
+                with patch('botgateway.api.health.get_cpu_info', return_value=cpu_val):
                     with mocks[2], mocks[3], mocks[4], mocks[5]:
                         result = await health_check(mock_request)
 

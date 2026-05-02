@@ -1,19 +1,17 @@
 """Test config module"""
 
 import json
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-
-import pytest
 from unittest.mock import MagicMock, patch
 
 from botgateway.config import (
     DEFAULT_CONFIG,
-    load_config,
-    save_config,
     generate_token,
     get_default_config_path,
+    load_config,
+    save_config,
 )
 
 
@@ -117,7 +115,7 @@ class TestSaveConfig:
         config = {"host": "0.0.0.0", "port": 9000, "management_token": "test"}
         save_config(config, temp_path)
 
-        with open(temp_path, 'r') as f:
+        with open(temp_path) as f:
             saved = json.load(f)
 
         assert saved["host"] == "0.0.0.0"

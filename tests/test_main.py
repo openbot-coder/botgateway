@@ -1,9 +1,8 @@
 """Test main module"""
 
-import pytest
 
-from botgateway.main import create_app
 from botgateway.api.auth import AuthConfig
+from botgateway.main import create_app
 
 
 class TestCreateApp:

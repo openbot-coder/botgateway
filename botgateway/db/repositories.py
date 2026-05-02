@@ -115,11 +115,13 @@ class ModelGroupRepository:
         await self.db.execute(
             """INSERT INTO model_groups
             (id, name, description, routing_strategy, retry_count,
-            retry_delay, cooldown_period, is_active, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            retry_delay, cooldown_period, use_count, is_active,
+            created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (group.id, group.name, group.description, group.routing_strategy,
              group.retry_count, group.retry_delay, group.cooldown_period,
-             int(group.is_active), group.created_at, group.updated_at)
+             group.use_count, int(group.is_active),
+             group.created_at, group.updated_at)
         )
         await self.db.commit()
         return group
@@ -147,10 +149,12 @@ class ModelGroupRepository:
         await self.db.execute(
             """UPDATE model_groups SET name = ?, description = ?,
             routing_strategy = ?, retry_count = ?, retry_delay = ?,
-            cooldown_period = ?, is_active = ?, updated_at = ? WHERE id = ?""",
+            cooldown_period = ?, use_count = ?, is_active = ?,
+            updated_at = ? WHERE id = ?""",
             (group.name, group.description, group.routing_strategy,
              group.retry_count, group.retry_delay, group.cooldown_period,
-             int(group.is_active), group.updated_at, group.id)
+             group.use_count, int(group.is_active),
+             group.updated_at, group.id)
         )
         await self.db.commit()
         return group

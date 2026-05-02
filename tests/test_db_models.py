@@ -1,7 +1,5 @@
 """Test db models"""
 
-import pytest
-
 from botgateway.db.models import (
     ApiKey,
     Model,
@@ -318,6 +316,119 @@ class TestApiKey:
         assert api_key.is_active is True
 
 
+class TestModelGroupUseCount:
+    """Test ModelGroup use_count field"""
+
+    def test_use_count_default_is_zero_integer(self):
+        """正例: use_count 初始值应为整数 0"""
+        group = ModelGroup.create(name="test-group")
+        assert group.use_count == 0
+        assert isinstance(group.use_count, int)
+
+    def test_increment_group_use_count(self):
+        """正例: increment_group_use_count 将 use_count 从 0 递增到 1"""
+        group = ModelGroup.create(name="test-group")
+        assert group.use_count == 0
+        group.increment_use_count()
+        assert group.use_count == 1
+        assert isinstance(group.use_count, int)
+
+    def test_increment_group_use_count_multiple(self):
+        """正例: 多次调用 increment_use_count 正确递增"""
+        group = ModelGroup.create(name="test-group")
+        group.increment_use_count()
+        group.increment_use_count()
+        group.increment_use_count()
+        assert group.use_count == 3
+
+    def test_use_count_in_to_dict(self):
+        """正例: to_dict 返回 use_count 字段"""
+        group = ModelGroup.create(name="test-group")
+        data = group.to_dict()
+        assert "use_count" in data
+        assert data["use_count"] == 0
+
+    def test_use_count_in_from_dict(self):
+        """正例: from_dict 正确解析 use_count"""
+        data = {
+            "id": "group-1",
+            "name": "test",
+            "description": None,
+            "routing_strategy": "fallback",
+            "retry_count": 3,
+            "retry_delay": 1,
+            "cooldown_period": 60,
+            "is_active": 1,
+            "use_count": 5,
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+        }
+        group = ModelGroup.from_dict(data)
+        assert group.use_count == 5
+        assert isinstance(group.use_count, int)
+
+
+class TestBooleanDeserialization:
+    """Test boolean field deserialization from database"""
+
+    def test_is_active_false_from_dict(self):
+        """正例: from_dict 正确反序列化 is_active=False (整数 0)"""
+        data = {
+            "id": "model-1",
+            "provider_id": "provider-1",
+            "name": "test-model",
+            "model_type": "chat",
+            "is_active": 0,
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+        }
+        model = Model.from_dict(data)
+        assert model.is_active is False
+
+    def test_is_active_true_from_dict(self):
+        """正例: from_dict 正确反序列化 is_active=True (整数 1)"""
+        data = {
+            "id": "model-1",
+            "provider_id": "provider-1",
+            "name": "test-model",
+            "model_type": "chat",
+            "is_active": 1,
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+        }
+        model = Model.from_dict(data)
+        assert model.is_active is True
+
+    def test_is_active_false_string_from_dict(self):
+        """边界值: from_dict 正确处理字符串 'false' 不应返回 True"""
+        data = {
+            "id": "model-1",
+            "provider_id": "provider-1",
+            "name": "test-model",
+            "model_type": "chat",
+            "is_active": "false",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+        }
+        model = Model.from_dict(data)
+        # bool("false") 会返回 True -- 这是已知 Bug
+        # 修复后应返回 False
+        assert model.is_active is False
+
+    def test_provider_is_active_false_string(self):
+        """边界值: Provider from_dict 正确处理字符串 'false'"""
+        data = {
+            "id": "provider-1",
+            "name": "test-provider",
+            "api_type": "openai",
+            "is_active": "false",
+            "created_at": "2024-01-01T00:00:00",
+            "updated_at": "2024-01-01T00:00:00",
+        }
+        provider = Provider.from_dict(data)
+        assert provider.is_active is False
+
+
 class TestHelperFunctions:
     """Test helper functions"""
 
@@ -335,3 +446,12 @@ class TestHelperFunctions:
         assert isinstance(timestamp, str)
         assert "T" in timestamp  # ISO 格式包含 T
         assert "Z" not in timestamp  # 不包含 Z（utcnow 返回的不带 Z）
+
+    def test_now_iso_contains_utc_timezone(self):
+        """正例: now_iso 返回的字符串包含 UTC 时区信息"""
+        timestamp = now_iso()
+        assert isinstance(timestamp, str)
+        # datetime.now(timezone.utc).isoformat() 会包含 +00:00
+        assert "+00:00" in timestamp, (
+            f"期望时间戳包含 '+00:00' UTC 时区信息，实际: {timestamp}"
+        )
