@@ -14,7 +14,7 @@ class TestCreateApp:
         app = create_app(management_token="test-token")
         assert app is not None
         assert app.title == "BotGateway"
-        assert app.version == "0.2.0"
+        assert app.version == "0.3.0"
 
     def test_create_app_sets_auth_token(self):
         """正例: 设置认证 token"""
