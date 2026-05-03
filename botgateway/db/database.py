@@ -131,10 +131,37 @@ class Database:
             updated_at TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS mcp_tools (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            endpoint_url TEXT,
+            tool_schema TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS mcp_servers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            transport TEXT NOT NULL DEFAULT 'stdio',
+            command TEXT,
+            args TEXT,
+            url TEXT,
+            env TEXT,
+            description TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_models_provider ON models(provider_id);
         CREATE INDEX IF NOT EXISTS idx_model_group_members_group ON model_group_members(group_id);
         CREATE INDEX IF NOT EXISTS idx_model_group_members_model ON model_group_members(model_id);
         CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(api_key_hash);
+        CREATE INDEX IF NOT EXISTS idx_mcp_tools_name ON mcp_tools(name);
+        CREATE INDEX IF NOT EXISTS idx_mcp_servers_name ON mcp_servers(name);
         """
         conn = await self.connect()
         await conn.executescript(schema)

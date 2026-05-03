@@ -57,14 +57,18 @@ def get_db() -> Database:
     return Database.get_database()
 
 
-def _encrypt_api_key(api_key: str) -> tuple[str | None, str | None]:
+def _encrypt_api_key(api_key: str) -> tuple[str, str]:
     if not api_key:
         return None, None
     try:
         encryptor = ApiKeyEncryptor.get_instance()
         return encryptor.encrypt_to_base64(api_key)
-    except ValueError:
-        return None, None
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to encrypt API key: {str(e)}. "
+                   "Please ensure BOTGATEWAY_MASTER_KEY environment variable is set on the server."
+        )
 
 
 @router.post("", response_model=ProviderResponse, status_code=status.HTTP_201_CREATED)

@@ -116,33 +116,93 @@ def cmd_model_delete(args):
 
 
 def register_model_commands(subparsers):
-    parser = subparsers.add_parser("model", help="Manage models")
-    model_subparsers = parser.add_subparsers(dest="command", help="Model commands")
+    parser = subparsers.add_parser(
+        "model",
+        help="Manage models",
+        description="List, add, update, or delete models in the gateway."
+    )
+    model_subparsers = parser.add_subparsers(dest="command", help="Available model commands")
 
-    list_parser = model_subparsers.add_parser("list", help="List all models")
-    list_parser.add_argument("--provider-id", help="Filter by provider ID")
+    list_parser = model_subparsers.add_parser(
+        "list",
+        help="List all models",
+        description="List all models, optionally filtered by provider."
+    )
+    list_parser.add_argument(
+        "--provider-id",
+        help="Filter models by provider ID (optional)"
+    )
     list_parser.set_defaults(func=cmd_model_list)
 
-    add_parser = model_subparsers.add_parser("add", help="Create a model")
-    add_parser.add_argument("--provider-id", required=True, help="Provider ID")
-    add_parser.add_argument("--name", required=True, help="Model name")
-    add_parser.add_argument("--model-type", default="chat", help="Model type")
-    add_parser.add_argument("--max-tokens", help="Max tokens")
-    add_parser.add_argument("--temperature", type=float, help="Temperature")
-    add_parser.add_argument("--top-p", type=float, help="Top p")
-    add_parser.add_argument("--timeout", type=int, help="Timeout in seconds")
+    add_parser = model_subparsers.add_parser(
+        "add",
+        help="Create a new model",
+        description="Create a new model. Required: --provider-id and --name."
+    )
+    add_parser.add_argument(
+        "--provider-id", required=True,
+        help="Provider ID (required). Get from: botcli provider list"
+    )
+    add_parser.add_argument(
+        "--name", required=True,
+        help="Model name (required), e.g., gpt-4, claude-3"
+    )
+    add_parser.add_argument(
+        "--model-type",
+        default="chat",
+        help="Model type (default: chat). Options: chat, embedding"
+    )
+    add_parser.add_argument(
+        "--max-tokens",
+        help="Maximum tokens in response (optional), e.g., 4096"
+    )
+    add_parser.add_argument(
+        "--temperature",
+        type=float,
+        help="Temperature for randomness (optional, default: 0.7), range: 0-2"
+    )
+    add_parser.add_argument(
+        "--top-p",
+        type=float,
+        help="Top-p sampling (optional, default: 1.0), range: 0-1"
+    )
+    add_parser.add_argument(
+        "--timeout",
+        type=int,
+        help="Request timeout in seconds (optional, default: 60)"
+    )
     add_parser.set_defaults(func=cmd_model_add)
 
-    update_parser = model_subparsers.add_parser("update", help="Update a model")
-    update_parser.add_argument("id", help="Model ID")
-    update_parser.add_argument("--name", help="Model name")
-    update_parser.add_argument("--model-type", help="Model type")
-    update_parser.add_argument("--max-tokens", help="Max tokens")
-    update_parser.add_argument("--temperature", type=float, help="Temperature")
-    update_parser.add_argument("--top-p", type=float, help="Top p")
-    update_parser.add_argument("--timeout", type=int, help="Timeout in seconds")
+    update_parser = model_subparsers.add_parser(
+        "update",
+        help="Update an existing model",
+        description="Update model parameters. Required: model ID as positional argument."
+    )
+    update_parser.add_argument(
+        "id",
+        help="Model ID (required). Get from: botcli model list"
+    )
+    update_parser.add_argument("--name", help="Model name (optional)")
+    update_parser.add_argument("--model-type", help="Model type (optional)")
+    update_parser.add_argument("--max-tokens", help="Max tokens (optional)")
+    update_parser.add_argument(
+        "--temperature", type=float,
+        help="Temperature (optional), range: 0-2"
+    )
+    update_parser.add_argument(
+        "--top-p", type=float,
+        help="Top-p (optional), range: 0-1"
+    )
+    update_parser.add_argument("--timeout", type=int, help="Timeout in seconds (optional)")
     update_parser.set_defaults(func=cmd_model_update)
 
-    delete_parser = model_subparsers.add_parser("delete", help="Delete a model")
-    delete_parser.add_argument("id", help="Model ID")
+    delete_parser = model_subparsers.add_parser(
+        "delete",
+        help="Delete a model",
+        description="Delete a model by ID."
+    )
+    delete_parser.add_argument(
+        "id",
+        help="Model ID (required). Get from: botcli model list"
+    )
     delete_parser.set_defaults(func=cmd_model_delete)

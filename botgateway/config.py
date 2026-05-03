@@ -1,10 +1,12 @@
 import json
+import os
 from pathlib import Path
 
 DEFAULT_CONFIG = {
     "host": "127.0.0.1",
     "port": 8000,
     "management_token": "",
+    "master_key": "",
 }
 
 
@@ -24,7 +26,13 @@ def load_config(config_path: str | None = None) -> dict:
     try:
         with open(path, encoding="utf-8") as f:
             config = json.load(f)
-        return {**DEFAULT_CONFIG, **config}
+        merged = {**DEFAULT_CONFIG, **config}
+
+        master_key = merged.get("master_key", "")
+        if master_key:
+            os.environ["BOTGATEWAY_MASTER_KEY"] = master_key
+
+        return merged
     except Exception:
         return DEFAULT_CONFIG.copy()
 

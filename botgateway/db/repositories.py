@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .database import Database
-from .models import ApiKey, Model, ModelGroup, ModelGroupMember, Provider
+from .models import ApiKey, McpServer, McpTool, Model, ModelGroup, ModelGroupMember, Provider
 
 
 class ProviderRepository:
@@ -260,4 +260,118 @@ class ApiKeyRepository:
 
     async def count(self) -> int:
         row = await self.db.fetchone("SELECT COUNT(*) as count FROM api_keys")
+        return row["count"] if row else 0
+
+
+class McpToolRepository:
+    def __init__(self, db: Database):
+        self.db = db
+
+    async def create(self, tool: McpTool) -> McpTool:
+        await self.db.execute(
+            """INSERT INTO mcp_tools
+            (id, name, description, endpoint_url, tool_schema,
+            is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (tool.id, tool.name, tool.description, tool.endpoint_url,
+             tool.tool_schema, int(tool.is_active), tool.created_at, tool.updated_at)
+        )
+        await self.db.commit()
+        return tool
+
+    async def get_by_id(self, id: str) -> McpTool | None:
+        row = await self.db.fetchone(
+            "SELECT * FROM mcp_tools WHERE id = ?", (id,)
+        )
+        return McpTool.from_dict(row) if row else None
+
+    async def get_by_name(self, name: str) -> McpTool | None:
+        row = await self.db.fetchone(
+            "SELECT * FROM mcp_tools WHERE name = ?", (name,)
+        )
+        return McpTool.from_dict(row) if row else None
+
+    async def get_all(self, active_only: bool = True) -> list[McpTool]:
+        sql = "SELECT * FROM mcp_tools"
+        if active_only:
+            sql += " WHERE is_active = 1"
+        rows = await self.db.fetchall(sql)
+        return [McpTool.from_dict(row) for row in rows]
+
+    async def update(self, tool: McpTool) -> McpTool:
+        await self.db.execute(
+            """UPDATE mcp_tools SET name = ?, description = ?,
+            endpoint_url = ?, tool_schema = ?,
+            is_active = ?, updated_at = ? WHERE id = ?""",
+            (tool.name, tool.description, tool.endpoint_url,
+             tool.tool_schema, int(tool.is_active), tool.updated_at, tool.id)
+        )
+        await self.db.commit()
+        return tool
+
+    async def delete(self, id: str) -> bool:
+        await self.db.execute("DELETE FROM mcp_tools WHERE id = ?", (id,))
+        await self.db.commit()
+        return True
+
+    async def count(self) -> int:
+        row = await self.db.fetchone("SELECT COUNT(*) as count FROM mcp_tools")
+        return row["count"] if row else 0
+
+
+class McpServerRepository:
+    def __init__(self, db: Database):
+        self.db = db
+
+    async def create(self, server: McpServer) -> McpServer:
+        await self.db.execute(
+            """INSERT INTO mcp_servers
+            (id, name, transport, command, args, url, env,
+            description, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (server.id, server.name, server.transport, server.command,
+             server.args, server.url, server.env, server.description,
+             int(server.is_active), server.created_at, server.updated_at)
+        )
+        await self.db.commit()
+        return server
+
+    async def get_by_id(self, id: str) -> McpServer | None:
+        row = await self.db.fetchone(
+            "SELECT * FROM mcp_servers WHERE id = ?", (id,)
+        )
+        return McpServer.from_dict(row) if row else None
+
+    async def get_by_name(self, name: str) -> McpServer | None:
+        row = await self.db.fetchone(
+            "SELECT * FROM mcp_servers WHERE name = ?", (name,)
+        )
+        return McpServer.from_dict(row) if row else None
+
+    async def get_all(self, active_only: bool = True) -> list[McpServer]:
+        sql = "SELECT * FROM mcp_servers"
+        if active_only:
+            sql += " WHERE is_active = 1"
+        rows = await self.db.fetchall(sql)
+        return [McpServer.from_dict(row) for row in rows]
+
+    async def update(self, server: McpServer) -> McpServer:
+        await self.db.execute(
+            """UPDATE mcp_servers SET name = ?, transport = ?, command = ?,
+            args = ?, url = ?, env = ?, description = ?,
+            is_active = ?, updated_at = ? WHERE id = ?""",
+            (server.name, server.transport, server.command, server.args,
+             server.url, server.env, server.description,
+             int(server.is_active), server.updated_at, server.id)
+        )
+        await self.db.commit()
+        return server
+
+    async def delete(self, id: str) -> bool:
+        await self.db.execute("DELETE FROM mcp_servers WHERE id = ?", (id,))
+        await self.db.commit()
+        return True
+
+    async def count(self) -> int:
+        row = await self.db.fetchone("SELECT COUNT(*) as count FROM mcp_servers")
         return row["count"] if row else 0

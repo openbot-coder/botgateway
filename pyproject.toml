@@ -1,6 +1,6 @@
 [project]
 name = "botgateway"
-version = "0.3.1"
+version = "0.4.0"
 description = "AI Gateway for bots"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,18 +25,22 @@ dependencies = [
     "openai>=1.0.0",
     "anthropic>=0.20.0",
     "pydantic>=2.0.0",
+    "python-multipart>=0.0.6",
+    "mcp>=1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "ruff>=0.2.0",
 ]
 
 [project.scripts]
 botgateway = "botgateway.cli.botgateway:main"
 botcli = "botgateway.cli.botcli:main"
+openbot = "botgateway.cli.openbot:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

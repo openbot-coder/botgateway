@@ -282,3 +282,129 @@ class ApiKey:
             created_at=data["created_at"],
             updated_at=data["updated_at"],
         )
+
+
+@dataclass
+class McpTool:
+    id: str
+    name: str
+    description: str | None = None
+    endpoint_url: str | None = None
+    tool_schema: str | None = None
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, name: str, description: str | None = None,
+               endpoint_url: str | None = None,
+               tool_schema: dict | None = None) -> McpTool:
+        return cls(
+            id=generate_id(),
+            name=name,
+            description=description,
+            endpoint_url=endpoint_url,
+            tool_schema=json.dumps(tool_schema) if tool_schema else None,
+        )
+
+    def get_tool_schema(self) -> dict | None:
+        if self.tool_schema:
+            return json.loads(self.tool_schema)
+        return None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "endpoint_url": self.endpoint_url,
+            "tool_schema": self.get_tool_schema(),
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> McpTool:
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data.get("description"),
+            endpoint_url=data.get("endpoint_url"),
+            tool_schema=data.get("tool_schema"),
+            is_active=_parse_bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )
+
+
+@dataclass
+class McpServer:
+    id: str
+    name: str
+    transport: str = "stdio"  # stdio, sse, http
+    command: str | None = None
+    args: str | None = None  # JSON array of arguments
+    url: str | None = None
+    env: str | None = None  # JSON object of environment variables
+    description: str | None = None
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, name: str, transport: str = "stdio",
+               command: str | None = None, args: list[str] | None = None,
+               url: str | None = None, env: dict | None = None,
+               description: str | None = None) -> McpServer:
+        return cls(
+            id=generate_id(),
+            name=name,
+            transport=transport,
+            command=command,
+            args=json.dumps(args) if args else None,
+            url=url,
+            env=json.dumps(env) if env else None,
+            description=description,
+        )
+
+    def get_args(self) -> list[str] | None:
+        if self.args:
+            return json.loads(self.args)
+        return None
+
+    def get_env(self) -> dict | None:
+        if self.env:
+            return json.loads(self.env)
+        return None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "transport": self.transport,
+            "command": self.command,
+            "args": self.get_args(),
+            "url": self.url,
+            "env": self.get_env(),
+            "description": self.description,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> McpServer:
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            transport=data.get("transport", "stdio"),
+            command=data.get("command"),
+            args=data.get("args"),
+            url=data.get("url"),
+            env=data.get("env"),
+            description=data.get("description"),
+            is_active=_parse_bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )

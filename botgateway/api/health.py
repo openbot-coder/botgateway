@@ -20,9 +20,9 @@ def get_memory_info():
         raise RuntimeError("psutil not available")
     memory = psutil.virtual_memory()
     return {
-        "total": memory.total,
-        "available": memory.available,
-        "used": memory.used,
+        "total": round(memory.total / (1024 * 1024), 2),
+        "available": round(memory.available / (1024 * 1024), 2),
+        "used": round(memory.used / (1024 * 1024), 2),
         "percent": memory.percent,
     }
 
@@ -42,9 +42,9 @@ def get_disk_info():
         raise RuntimeError("psutil not available")
     disk = psutil.disk_usage("/")
     return {
-        "total": disk.total,
-        "used": disk.used,
-        "free": disk.free,
+        "total": round(disk.total / (1024 * 1024), 2),
+        "used": round(disk.used / (1024 * 1024), 2),
+        "free": round(disk.free / (1024 * 1024), 2),
         "percent": disk.percent,
     }
 

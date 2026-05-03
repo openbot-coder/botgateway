@@ -156,47 +156,116 @@ def cmd_model_group_delete(args):
 
 
 def register_model_group_commands(subparsers):
-    parser = subparsers.add_parser("model-group", help="Manage model groups")
-    group_subparsers = parser.add_subparsers(dest="command", help="Model group commands")
+    parser = subparsers.add_parser(
+        "model-group",
+        help="Manage model groups",
+        description="List, add, update, or delete model groups with routing strategies."
+    )
+    group_subparsers = parser.add_subparsers(dest="command", help="Available model group commands")
 
-    list_parser = group_subparsers.add_parser("list", help="List all model groups")
+    list_parser = group_subparsers.add_parser(
+        "list",
+        help="List all model groups",
+        description="List all configured model groups."
+    )
     list_parser.set_defaults(func=cmd_model_group_list)
 
-    add_parser = group_subparsers.add_parser("add", help="Create a model group")
-    add_parser.add_argument("--name", required=True, help="Model group name")
-    add_parser.add_argument("--strategy", required=True, choices=["fallback", "weight_random"],
-                            help="Routing strategy")
-    add_parser.add_argument("--description", help="Description")
-    add_parser.add_argument("--retry-count", help="Retry count")
-    add_parser.add_argument("--retry-delay", help="Retry delay in seconds")
-    add_parser.add_argument("--cooldown", help="Cooldown period in seconds")
+    add_parser = group_subparsers.add_parser(
+        "add",
+        help="Create a model group",
+        description="Create a new model group. Required: --name and --strategy."
+    )
+    add_parser.add_argument(
+        "--name", required=True,
+        help="Model group name (required), e.g., high-quality, fast, balanced"
+    )
+    add_parser.add_argument(
+        "--strategy", required=True,
+        choices=["fallback", "weight_random"],
+        help="Routing strategy (required). "
+             "fallback: first available; weight_random: weighted random"
+    )
+    add_parser.add_argument("--description", help="Description of the group (optional)")
+    add_parser.add_argument(
+        "--retry-count",
+        help="Number of retries on failure (optional, default: 3)"
+    )
+    add_parser.add_argument(
+        "--retry-delay",
+        help="Delay between retries in seconds (optional, default: 1)"
+    )
+    add_parser.add_argument(
+        "--cooldown",
+        help="Cooldown period for failed models in seconds (optional, default: 60)"
+    )
     add_parser.set_defaults(func=cmd_model_group_add)
 
-    update_parser = group_subparsers.add_parser("update", help="Update a model group")
-    update_parser.add_argument("id", help="Model group ID")
-    update_parser.add_argument("--name", help="Model group name")
-    update_parser.add_argument("--strategy", choices=["fallback", "weight_random"],
-                               help="Routing strategy")
-    update_parser.add_argument("--description", help="Description")
-    update_parser.add_argument("--retry-count", help="Retry count")
-    update_parser.add_argument("--retry-delay", help="Retry delay in seconds")
-    update_parser.add_argument("--cooldown", help="Cooldown period in seconds")
+    update_parser = group_subparsers.add_parser(
+        "update",
+        help="Update a model group",
+        description="Update model group settings. Required: model group ID as positional argument."
+    )
+    update_parser.add_argument(
+        "id",
+        help="Model group ID (required). Get from: botcli model-group list"
+    )
+    update_parser.add_argument("--name", help="Model group name (optional)")
+    update_parser.add_argument(
+        "--strategy",
+        choices=["fallback", "weight_random"],
+        help="Routing strategy (optional)"
+    )
+    update_parser.add_argument("--description", help="Description (optional)")
+    update_parser.add_argument("--retry-count", help="Retry count (optional)")
+    update_parser.add_argument("--retry-delay", help="Retry delay in seconds (optional)")
+    update_parser.add_argument("--cooldown", help="Cooldown period in seconds (optional)")
     update_parser.set_defaults(func=cmd_model_group_update)
 
-    add_member_parser = group_subparsers.add_parser("add-member", help="Add member to model group")
-    add_member_parser.add_argument("group_id", help="Model group ID")
-    add_member_parser.add_argument("--model-id", required=True, help="Model ID")
-    add_member_parser.add_argument("--priority", help="Priority")
-    add_member_parser.add_argument("--weight", help="Weight")
+    add_member_parser = group_subparsers.add_parser(
+        "add-member",
+        help="Add member to model group",
+        description="Add a model as member to a model group. Required: group_id and --model-id."
+    )
+    add_member_parser.add_argument(
+        "group_id",
+        help="Model group ID (required). Get from: botcli model-group list"
+    )
+    add_member_parser.add_argument(
+        "--model-id", required=True,
+        help="Model ID to add (required). Get from: botcli model list"
+    )
+    add_member_parser.add_argument(
+        "--priority",
+        help="Priority for fallback strategy (optional, default: 0). Higher = tried first"
+    )
+    add_member_parser.add_argument(
+        "--weight",
+        help="Weight for weight_random (optional, default: 1). Higher = more likely"
+    )
     add_member_parser.set_defaults(func=cmd_model_group_add_member)
 
     remove_member_parser = group_subparsers.add_parser(
-        "remove-member", help="Remove member from model group"
+        "remove-member",
+        help="Remove member from model group",
+        description="Remove a model from a model group."
     )
-    remove_member_parser.add_argument("group_id", help="Model group ID")
-    remove_member_parser.add_argument("member_id", help="Member ID")
+    remove_member_parser.add_argument(
+        "group_id",
+        help="Model group ID (required)"
+    )
+    remove_member_parser.add_argument(
+        "member_id",
+        help="Member ID to remove (required). Get from: botcli model-group list"
+    )
     remove_member_parser.set_defaults(func=cmd_model_group_remove_member)
 
-    delete_parser = group_subparsers.add_parser("delete", help="Delete a model group")
-    delete_parser.add_argument("id", help="Model group ID")
+    delete_parser = group_subparsers.add_parser(
+        "delete",
+        help="Delete a model group",
+        description="Delete a model group by ID."
+    )
+    delete_parser.add_argument(
+        "id",
+        help="Model group ID (required). Get from: botcli model-group list"
+    )
     delete_parser.set_defaults(func=cmd_model_group_delete)

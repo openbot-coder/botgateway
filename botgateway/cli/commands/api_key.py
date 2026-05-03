@@ -93,21 +93,55 @@ def cmd_api_key_delete(args):
 
 
 def register_api_key_commands(subparsers):
-    parser = subparsers.add_parser("api-key", help="Manage API keys")
-    api_key_subparsers = parser.add_subparsers(dest="command", help="API key commands")
+    parser = subparsers.add_parser(
+        "api-key",
+        help="Manage API keys",
+        description="List, create, update, or delete API keys for client authentication."
+    )
+    api_key_subparsers = parser.add_subparsers(dest="command", help="Available API key commands")
 
-    list_parser = api_key_subparsers.add_parser("list", help="List all API keys")
+    list_parser = api_key_subparsers.add_parser(
+        "list",
+        help="List all API keys",
+        description="List all configured API keys. "
+                 "Note: API key values are only shown once at creation."
+    )
     list_parser.set_defaults(func=cmd_api_key_list)
 
-    create_parser = api_key_subparsers.add_parser("create", help="Create a new API key")
-    create_parser.add_argument("--name", required=True, help="API key name")
+    create_parser = api_key_subparsers.add_parser(
+        "create",
+        help="Create a new API key",
+        description="Create a new API key for client authentication. "
+                 "The key value is only shown once - save it securely!"
+    )
+    create_parser.add_argument(
+        "--name", required=True,
+        help="API key name/label (required), e.g., prod-key, test-key, mobile-app"
+    )
     create_parser.set_defaults(func=cmd_api_key_create)
 
-    update_parser = api_key_subparsers.add_parser("update", help="Update an API key")
-    update_parser.add_argument("id", help="API key ID")
-    update_parser.add_argument("--name", help="API key name")
+    update_parser = api_key_subparsers.add_parser(
+        "update",
+        help="Update an API key",
+        description="Update API key name. Required: API key ID as positional argument."
+    )
+    update_parser.add_argument(
+        "id",
+        help="API key ID (required). Get from: botcli api-key list"
+    )
+    update_parser.add_argument(
+        "--name",
+        help="New API key name/label (optional)"
+    )
     update_parser.set_defaults(func=cmd_api_key_update)
 
-    delete_parser = api_key_subparsers.add_parser("delete", help="Delete an API key")
-    delete_parser.add_argument("id", help="API key ID")
+    delete_parser = api_key_subparsers.add_parser(
+        "delete",
+        help="Delete an API key",
+        description="Delete an API key. This will revoke access for clients using this key."
+    )
+    delete_parser.add_argument(
+        "id",
+        help="API key ID (required). Get from: botcli api-key list"
+    )
     delete_parser.set_defaults(func=cmd_api_key_delete)

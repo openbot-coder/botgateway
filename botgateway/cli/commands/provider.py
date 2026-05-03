@@ -102,27 +102,76 @@ def cmd_provider_delete(args):
 
 
 def register_provider_commands(subparsers):
-    parser = subparsers.add_parser("provider", help="Manage providers")
-    provider_subparsers = parser.add_subparsers(dest="command", help="Provider commands")
+    parser = subparsers.add_parser(
+        "provider",
+        help="Manage providers",
+        description="List, add, update, or delete LLM providers in the gateway."
+    )
+    provider_subparsers = parser.add_subparsers(dest="command", help="Available provider commands")
 
-    list_parser = provider_subparsers.add_parser("list", help="List all providers")
+    list_parser = provider_subparsers.add_parser(
+        "list",
+        help="List all providers",
+        description="List all configured providers."
+    )
     list_parser.set_defaults(func=cmd_provider_list)
 
-    add_parser = provider_subparsers.add_parser("add", help="Create a provider")
-    add_parser.add_argument("--name", required=True, help="Provider name")
-    add_parser.add_argument("--api-type", default="openai", help="API type (openai/anthropic)")
-    add_parser.add_argument("--base-url", help="Base URL")
-    add_parser.add_argument("--api-key", help="API key")
+    add_parser = provider_subparsers.add_parser(
+        "add",
+        help="Create a provider",
+        description="Create a new provider. Required: --name."
+    )
+    add_parser.add_argument(
+        "--name", required=True,
+        help="Provider name (required), e.g., openai, anthropic, my-provider"
+    )
+    add_parser.add_argument(
+        "--api-type",
+        default="openai",
+        help="API type (default: openai). Options: openai, anthropic"
+    )
+    add_parser.add_argument(
+        "--base-url",
+        help="Base URL for API (optional), e.g., https://api.openai.com/v1"
+    )
+    add_parser.add_argument(
+        "--api-key",
+        help="API key for authentication (optional, will be encrypted)"
+    )
     add_parser.set_defaults(func=cmd_provider_add)
 
-    update_parser = provider_subparsers.add_parser("update", help="Update a provider")
-    update_parser.add_argument("id", help="Provider ID")
-    update_parser.add_argument("--name", help="Provider name")
-    update_parser.add_argument("--api-type", help="API type")
-    update_parser.add_argument("--base-url", help="Base URL")
-    update_parser.add_argument("--api-key", help="API key")
+    update_parser = provider_subparsers.add_parser(
+        "update",
+        help="Update a provider",
+        description="Update provider settings. Required: provider ID as positional argument."
+    )
+    update_parser.add_argument(
+        "id",
+        help="Provider ID (required). Get from: botcli provider list"
+    )
+    update_parser.add_argument("--name", help="Provider name (optional)")
+    update_parser.add_argument(
+        "--api-type",
+        help="API type (optional). Options: openai, anthropic"
+    )
+    update_parser.add_argument(
+        "--base-url",
+        help="Base URL for API (optional), e.g., https://api.openai.com/v1"
+    )
+    update_parser.add_argument(
+        "--api-key",
+        help="API key (optional, will be encrypted). "
+             "Note: BOTGATEWAY_MASTER_KEY must be set on server"
+    )
     update_parser.set_defaults(func=cmd_provider_update)
 
-    delete_parser = provider_subparsers.add_parser("delete", help="Delete a provider")
-    delete_parser.add_argument("id", help="Provider ID")
+    delete_parser = provider_subparsers.add_parser(
+        "delete",
+        help="Delete a provider",
+        description="Delete a provider by ID."
+    )
+    delete_parser.add_argument(
+        "id",
+        help="Provider ID (required). Get from: botcli provider list"
+    )
     delete_parser.set_defaults(func=cmd_provider_delete)
