@@ -1,6 +1,5 @@
 import time
 from datetime import datetime
-from typing import List, Dict
 
 try:
     import psutil
@@ -8,7 +7,7 @@ try:
 except ImportError:
     PSUTIL_AVAILABLE = False
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from ..api.auth import verify_management_token
@@ -79,7 +78,7 @@ async def health_check(request: Request):
     auth_result = verify_management_token(request)
     if isinstance(auth_result, JSONResponse):
         return auth_result
-    
+
     try:
         memory = get_memory_info()
         cpu = get_cpu_info()
@@ -87,20 +86,20 @@ async def health_check(request: Request):
         network = get_network_info()
         process = get_process_info()
         uptime = get_uptime()
-    except RuntimeError as e:
+    except RuntimeError:
         raise HTTPException(
             status_code=500,
             detail="Internal server error: required dependencies not available"
         )
-    
-    routes: List[Dict[str, str]] = []
+
+    routes: list[dict[str, str]] = []
     for route in request.app.routes:
         if hasattr(route, 'path') and hasattr(route, 'methods'):
             routes.append({
                 "path": route.path,
                 "methods": list(route.methods),
             })
-    
+
     return {
         "status": "healthy",
         "server_time": datetime.utcnow().isoformat() + "Z",

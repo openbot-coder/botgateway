@@ -1,0 +1,262 @@
+from __future__ import annotations
+
+import json
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+
+
+def generate_id() -> str:
+    return str(uuid.uuid4())
+
+
+def now_iso() -> str:
+    return datetime.utcnow().isoformat()
+
+
+@dataclass
+class Provider:
+    id: str
+    name: str
+    api_type: str = "openai"
+    base_url: str | None = None
+    api_key_encrypted: str | None = None
+    key_nonce: str | None = None
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, name: str, api_type: str = "openai",
+               base_url: str | None = None) -> Provider:
+        return cls(id=generate_id(), name=name, api_type=api_type, base_url=base_url)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "api_type": self.api_type,
+            "base_url": self.base_url,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Provider:
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            api_type=data.get("api_type", "openai"),
+            base_url=data.get("base_url"),
+            api_key_encrypted=data.get("api_key_encrypted"),
+            key_nonce=data.get("key_nonce"),
+            is_active=bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )
+
+
+@dataclass
+class Model:
+    id: str
+    provider_id: str
+    name: str
+    model_type: str = "chat"
+    max_tokens: int | None = None
+    temperature: float = 0.7
+    top_p: float = 1.0
+    timeout: int = 60
+    extra_params: str | None = None
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, provider_id: str, name: str, model_type: str = "chat",
+               max_tokens: int | None = None, temperature: float = 0.7,
+               top_p: float = 1.0, timeout: int = 60,
+               extra_params: dict | None = None) -> Model:
+        return cls(
+            id=generate_id(),
+            provider_id=provider_id,
+            name=name,
+            model_type=model_type,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            timeout=timeout,
+            extra_params=json.dumps(extra_params) if extra_params else None,
+        )
+
+    def get_extra_params(self) -> dict | None:
+        if self.extra_params:
+            return json.loads(self.extra_params)
+        return None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "provider_id": self.provider_id,
+            "name": self.name,
+            "model_type": self.model_type,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "timeout": self.timeout,
+            "extra_params": self.get_extra_params(),
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Model:
+        return cls(
+            id=data["id"],
+            provider_id=data["provider_id"],
+            name=data["name"],
+            model_type=data.get("model_type", "chat"),
+            max_tokens=data.get("max_tokens"),
+            temperature=data.get("temperature", 0.7),
+            top_p=data.get("top_p", 1.0),
+            timeout=data.get("timeout", 60),
+            extra_params=data.get("extra_params"),
+            is_active=bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )
+
+
+@dataclass
+class ModelGroup:
+    id: str
+    name: str
+    description: str | None = None
+    routing_strategy: str = "fallback"
+    retry_count: int = 3
+    retry_delay: int = 1
+    cooldown_period: int = 60
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, name: str, description: str | None = None,
+               routing_strategy: str = "fallback", retry_count: int = 3,
+               retry_delay: int = 1, cooldown_period: int = 60) -> ModelGroup:
+        return cls(
+            id=generate_id(),
+            name=name,
+            description=description,
+            routing_strategy=routing_strategy,
+            retry_count=retry_count,
+            retry_delay=retry_delay,
+            cooldown_period=cooldown_period,
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "routing_strategy": self.routing_strategy,
+            "retry_count": self.retry_count,
+            "retry_delay": self.retry_delay,
+            "cooldown_period": self.cooldown_period,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ModelGroup:
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            description=data.get("description"),
+            routing_strategy=data.get("routing_strategy", "fallback"),
+            retry_count=data.get("retry_count", 3),
+            retry_delay=data.get("retry_delay", 1),
+            cooldown_period=data.get("cooldown_period", 60),
+            is_active=bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )
+
+
+@dataclass
+class ModelGroupMember:
+    id: str
+    group_id: str
+    model_id: str
+    priority: int = 0
+    weight: int = 1
+    created_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, group_id: str, model_id: str,
+               priority: int = 0, weight: int = 1) -> ModelGroupMember:
+        return cls(
+            id=generate_id(),
+            group_id=group_id,
+            model_id=model_id,
+            priority=priority,
+            weight=weight,
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "group_id": self.group_id,
+            "model_id": self.model_id,
+            "priority": self.priority,
+            "weight": self.weight,
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ModelGroupMember:
+        return cls(
+            id=data["id"],
+            group_id=data["group_id"],
+            model_id=data["model_id"],
+            priority=data.get("priority", 0),
+            weight=data.get("weight", 1),
+            created_at=data["created_at"],
+        )
+
+
+@dataclass
+class ApiKey:
+    id: str
+    name: str
+    api_key_hash: str
+    is_active: bool = True
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
+
+    @classmethod
+    def create(cls, name: str, api_key_hash: str) -> ApiKey:
+        return cls(id=generate_id(), name=name, api_key_hash=api_key_hash)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "api_key_hash": self.api_key_hash,
+            "is_active": self.is_active,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ApiKey:
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            api_key_hash=data["api_key_hash"],
+            is_active=bool(data.get("is_active", 1)),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"],
+        )

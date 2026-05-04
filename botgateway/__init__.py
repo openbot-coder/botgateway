@@ -1,3 +1,5 @@
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
-from .main import create_app
+from .main import create_app as create_app
+
+__all__ = ["__version__", "create_app"]

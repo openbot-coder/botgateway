@@ -2,20 +2,27 @@ import argparse
 import json
 import os
 import sys
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+
+from botgateway.cli.commands import (
+    register_api_key_commands,
+    register_model_commands,
+    register_model_group_commands,
+    register_provider_commands,
+)
 
 
 def cmd_health(args):
     url = f"{args.server}/health"
     token = args.token or os.environ.get("BOTGATEWAY_TOKEN")
-    
+
     if not token:
         print("Error: Token is required", file=sys.stderr)
         sys.exit(1)
-    
+
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     try:
         req = Request(url, headers=headers)
         with urlopen(req) as response:
@@ -35,13 +42,13 @@ def cmd_health(args):
 def cmd_status(args):
     url = f"{args.server}/health"
     token = args.token or os.environ.get("BOTGATEWAY_TOKEN")
-    
+
     if not token:
         print("Error: Token is required", file=sys.stderr)
         sys.exit(1)
-    
+
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     try:
         req = Request(url, headers=headers)
         with urlopen(req, timeout=5) as response:
@@ -65,33 +72,40 @@ def cmd_status(args):
 def main():
     parser = argparse.ArgumentParser(
         prog="botcli",
-        description="管理 BotGateway 服务的命令行工具"
+        description="BotGateway CLI - Manage AI Gateway"
     )
-    
+
     parser.add_argument(
         "--server",
         type=str,
-        default="http://localhost:8000",
-        help="BotGateway 服务地址"
+        default=os.environ.get("BOTGATEWAY_SERVER", "http://localhost:8000"),
+        help="BotGateway server address"
     )
-    
+
     parser.add_argument(
         "--token",
         type=str,
-        help="管理 token（也可通过环境变量 BOTGATEWAY_TOKEN 设置）"
+        help="Management token (can also be set via BOTGATEWAY_TOKEN env var)"
     )
-    
-    subparsers = parser.add_subparsers(dest="command", help="可用命令")
-    
-    subparsers.add_parser("health", help="查询健康状态（需要认证）")
-    subparsers.add_parser("status", help="检查服务状态（需要认证）")
-    
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    subparsers.add_parser("health", help="Query health status (requires auth)")
+    subparsers.add_parser("status", help="Check server status (requires auth)")
+
+    register_api_key_commands(subparsers)
+    register_provider_commands(subparsers)
+    register_model_commands(subparsers)
+    register_model_group_commands(subparsers)
+
     args = parser.parse_args()
-    
+
     if args.command == "health":
         cmd_health(args)
     elif args.command == "status":
         cmd_status(args)
+    elif args.command and hasattr(args, 'func'):
+        args.func(args)
     else:
         parser.print_help()
         sys.exit(1)
