@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from botgateway.api.auth import verify_management_token
 from botgateway.db import (
     Database,
     ModelGroup,
@@ -70,6 +71,7 @@ def get_db() -> Database:
 async def create_model_group(
     group_data: ModelGroupCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ModelGroupRepository(db)
     existing = await repo.get_by_name(group_data.name)
@@ -93,6 +95,7 @@ async def create_model_group(
 async def list_model_groups(
     active_only: bool = True,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ModelGroupRepository(db)
     groups = await repo.get_all(active_only=active_only)
@@ -111,6 +114,7 @@ async def list_model_groups(
 async def get_model_group(
     group_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ModelGroupRepository(db)
     group = await repo.get_by_id(group_id)
@@ -129,6 +133,7 @@ async def update_model_group(
     group_id: str,
     group_data: ModelGroupUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ModelGroupRepository(db)
     group = await repo.get_by_id(group_id)
@@ -166,6 +171,7 @@ async def update_model_group(
 async def delete_model_group(
     group_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ModelGroupRepository(db)
     group = await repo.get_by_id(group_id)
@@ -183,6 +189,7 @@ async def add_member(
     group_id: str,
     member_data: MemberCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     group_repo = ModelGroupRepository(db)
     group = await group_repo.get_by_id(group_id)
@@ -211,6 +218,7 @@ async def remove_member(
     group_id: str,
     member_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     member_repo = ModelGroupMemberRepository(db)
     member = await member_repo.get_by_id(member_id)

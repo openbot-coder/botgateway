@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
+from botgateway.api.auth import verify_management_token
 from botgateway.core.mcp_client import McpClient
 from botgateway.db import Database, McpServer, McpServerRepository, McpTool, McpToolRepository
 
@@ -111,6 +112,7 @@ def _parse_mcp_json(data: dict) -> list[dict]:
 async def create_mcp_tool(
     tool_data: McpToolCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpToolRepository(db)
     existing = await repo.get_by_name(tool_data.name)
@@ -134,6 +136,7 @@ async def create_mcp_tool(
 async def list_mcp_tools(
     active_only: bool = False,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpToolRepository(db)
     tools = await repo.get_all(active_only=active_only)
@@ -144,6 +147,7 @@ async def list_mcp_tools(
 async def import_mcp_tools(
     file: UploadFile,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     if not file.filename.endswith(".json"):
         raise HTTPException(
@@ -202,6 +206,7 @@ async def import_mcp_tools(
 async def import_mcp_servers(
     file: UploadFile,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     if not file.filename.endswith(".json"):
         raise HTTPException(
@@ -255,6 +260,7 @@ async def import_mcp_servers(
 async def create_mcp_server(
     server_data: McpServerCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpServerRepository(db)
     existing = await repo.get_by_name(server_data.name)
@@ -281,6 +287,7 @@ async def create_mcp_server(
 async def list_mcp_servers(
     active_only: bool = False,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpServerRepository(db)
     servers = await repo.get_all(active_only=active_only)
@@ -291,6 +298,7 @@ async def list_mcp_servers(
 async def get_mcp_server(
     server_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpServerRepository(db)
     server = await repo.get_by_id(server_id)
@@ -304,6 +312,7 @@ async def update_mcp_server(
     server_id: str,
     server_data: McpServerUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpServerRepository(db)
     server = await repo.get_by_id(server_id)
@@ -349,6 +358,7 @@ async def update_mcp_server(
 async def delete_mcp_server(
     server_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpServerRepository(db)
     server = await repo.get_by_id(server_id)
@@ -361,6 +371,7 @@ async def delete_mcp_server(
 async def sync_mcp_server_tools(
     server_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     server_repo = McpServerRepository(db)
     server = await server_repo.get_by_id(server_id)
@@ -407,6 +418,7 @@ async def sync_mcp_server_tools(
 async def get_mcp_tool(
     tool_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpToolRepository(db)
     tool = await repo.get_by_id(tool_id)
@@ -420,6 +432,7 @@ async def update_mcp_tool(
     tool_id: str,
     tool_data: McpToolUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpToolRepository(db)
     tool = await repo.get_by_id(tool_id)
@@ -456,6 +469,7 @@ async def update_mcp_tool(
 async def delete_mcp_tool(
     tool_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = McpToolRepository(db)
     tool = await repo.get_by_id(tool_id)

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from .database import Database
-from .models import ApiKey, McpServer, McpTool, Model, ModelGroup, ModelGroupMember, Provider
+from .models import ApiKey, McpServer, McpTool, Model, ModelGroup, ModelGroupMember, Provider, generate_id, now_iso
 
 
 class ProviderRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "providers"
 
     async def create(self, provider: Provider) -> Provider:
         await self.db.execute(
@@ -51,10 +52,22 @@ class ProviderRepository:
         await self.db.commit()
         return True
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class ModelRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "models"
 
     async def create(self, model: Model) -> Model:
         await self.db.execute(
@@ -106,10 +119,22 @@ class ModelRepository:
         await self.db.commit()
         return True
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class ModelGroupRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "model_groups"
 
     async def create(self, group: ModelGroup) -> ModelGroup:
         await self.db.execute(
@@ -164,10 +189,22 @@ class ModelGroupRepository:
         await self.db.commit()
         return True
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class ModelGroupMemberRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "model_group_members"
 
     async def create(self, member: ModelGroupMember) -> ModelGroupMember:
         await self.db.execute(
@@ -207,10 +244,22 @@ class ModelGroupMemberRepository:
         await self.db.commit()
         return True
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class ApiKeyRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "api_keys"
 
     async def create(self, api_key: ApiKey) -> ApiKey:
         await self.db.execute(
@@ -262,10 +311,22 @@ class ApiKeyRepository:
         row = await self.db.fetchone("SELECT COUNT(*) as count FROM api_keys")
         return row["count"] if row else 0
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class McpToolRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "mcp_tools"
 
     async def create(self, tool: McpTool) -> McpTool:
         await self.db.execute(
@@ -318,10 +379,22 @@ class McpToolRepository:
         row = await self.db.fetchone("SELECT COUNT(*) as count FROM mcp_tools")
         return row["count"] if row else 0
 
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()
+
 
 class McpServerRepository:
     def __init__(self, db: Database):
         self.db = db
+        self.table_name = "mcp_servers"
 
     async def create(self, server: McpServer) -> McpServer:
         await self.db.execute(
@@ -375,3 +448,14 @@ class McpServerRepository:
     async def count(self) -> int:
         row = await self.db.fetchone("SELECT COUNT(*) as count FROM mcp_servers")
         return row["count"] if row else 0
+
+    async def add_operation_log(
+        self, operation_type: str, details: str = None, record_id: str = None
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO operation_logs
+            (id, table_name, operation_type, record_id, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (generate_id(), self.table_name, operation_type, record_id, details, now_iso())
+        )
+        await self.db.commit()

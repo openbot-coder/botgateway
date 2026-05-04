@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from botgateway.api.auth import verify_management_token
 from botgateway.db import Database, Model, ModelRepository, ProviderRepository
 
 router = APIRouter(prefix="/models", tags=["models"])
@@ -52,6 +53,7 @@ def get_db() -> Database:
 async def create_model(
     model_data: ModelCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     provider_repo = ProviderRepository(db)
     provider = await provider_repo.get_by_id(model_data.provider_id)
@@ -79,6 +81,7 @@ async def list_models(
     provider_id: str | None = None,
     active_only: bool = True,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     model_repo = ModelRepository(db)
     models = await model_repo.get_all(provider_id=provider_id, active_only=active_only)
@@ -89,6 +92,7 @@ async def list_models(
 async def get_model(
     model_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     model_repo = ModelRepository(db)
     model = await model_repo.get_by_id(model_id)
@@ -102,6 +106,7 @@ async def update_model(
     model_id: str,
     model_data: ModelUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     model_repo = ModelRepository(db)
     model = await model_repo.get_by_id(model_id)
@@ -133,6 +138,7 @@ async def update_model(
 async def delete_model(
     model_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     model_repo = ModelRepository(db)
     model = await model_repo.get_by_id(model_id)

@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from botgateway.api.auth import verify_management_token
 from botgateway.core.encryptor import ApiKeyEncryptor
 from botgateway.db import Database, Provider, ProviderRepository
 
@@ -75,6 +76,7 @@ def _encrypt_api_key(api_key: str) -> tuple[str, str]:
 async def create_provider(
     provider_data: ProviderCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ProviderRepository(db)
     provider = Provider.create(
@@ -96,6 +98,7 @@ async def create_provider(
 async def list_providers(
     active_only: bool = True,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ProviderRepository(db)
     providers = await repo.get_all(active_only=active_only)
@@ -106,6 +109,7 @@ async def list_providers(
 async def get_provider(
     provider_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ProviderRepository(db)
     provider = await repo.get_by_id(provider_id)
@@ -119,6 +123,7 @@ async def update_provider(
     provider_id: str,
     provider_data: ProviderUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ProviderRepository(db)
     provider = await repo.get_by_id(provider_id)
@@ -145,6 +150,7 @@ async def update_provider(
 async def delete_provider(
     provider_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ProviderRepository(db)
     provider = await repo.get_by_id(provider_id)

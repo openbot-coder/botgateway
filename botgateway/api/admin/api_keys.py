@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from botgateway.api.auth import verify_management_token
 from botgateway.core.encryptor import ClientApiKeyValidator
 from botgateway.db import ApiKey, ApiKeyRepository, Database
 
@@ -43,6 +44,7 @@ def get_db() -> Database:
 async def create_api_key(
     api_key_data: ApiKeyCreate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     api_key_raw = ClientApiKeyValidator.generate_api_key_v2(prefix="bgw", length=40)
     api_key_hash = ClientApiKeyValidator.hash_key(api_key_raw)
@@ -63,6 +65,7 @@ async def create_api_key(
 async def list_api_keys(
     active_only: bool = False,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ApiKeyRepository(db)
     api_keys = await repo.get_all(active_only=active_only)
@@ -73,6 +76,7 @@ async def list_api_keys(
 async def get_api_key(
     api_key_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ApiKeyRepository(db)
     api_key = await repo.get_by_id(api_key_id)
@@ -86,6 +90,7 @@ async def update_api_key(
     api_key_id: str,
     api_key_data: ApiKeyUpdate,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ApiKeyRepository(db)
     api_key = await repo.get_by_id(api_key_id)
@@ -104,6 +109,7 @@ async def update_api_key(
 async def delete_api_key(
     api_key_id: str,
     db: Database = Depends(get_db),
+    token: str = Depends(verify_management_token),
 ):
     repo = ApiKeyRepository(db)
     api_key = await repo.get_by_id(api_key_id)
