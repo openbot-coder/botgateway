@@ -1,9 +1,8 @@
 """Test main module"""
 
-import pytest
 
-from botgateway.main import create_app
 from botgateway.api.auth import AuthConfig
+from botgateway.main import create_app
 
 
 class TestCreateApp:
@@ -14,7 +13,7 @@ class TestCreateApp:
         app = create_app(management_token="test-token")
         assert app is not None
         assert app.title == "BotGateway"
-        assert app.version == "0.2.0"
+        assert app.version == "0.4.0"
 
     def test_create_app_sets_auth_token(self):
         """正例: 设置认证 token"""

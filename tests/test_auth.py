@@ -1,7 +1,6 @@
 """Test auth module"""
 
-import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from botgateway.api.auth import AuthConfig, verify_management_token
 
@@ -89,3 +88,27 @@ class TestVerifyManagementToken:
 
         result = verify_management_token(mock_request)
         assert result == "valid-token-123"
+
+
+class TestVerifyManagementTokenExceptionHandling:
+    """Test exception handling and logging in verify_management_token"""
+
+    def setup_method(self):
+        AuthConfig.set_token("valid-token-123")
+
+    def teardown_method(self):
+        AuthConfig.set_token("")
+
+    @patch("botgateway.api.auth.logger")
+    def test_exception_returns_404_and_logs_error(self, mock_logger):
+        """反例: 异常时返回 404 并记录错误日志"""
+        mock_request = MagicMock()
+        mock_request.headers.get.side_effect = RuntimeError("unexpected error")
+
+        result = verify_management_token(mock_request)
+
+        assert hasattr(result, "status_code")
+        assert result.status_code == 404
+        mock_logger.error.assert_called_once()
+        args = mock_logger.error.call_args
+        assert "unexpected error" in str(args)

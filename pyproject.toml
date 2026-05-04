@@ -1,10 +1,10 @@
 [project]
 name = "botgateway"
-version = "0.2.0"
+version = "0.4.0"
 description = "AI Gateway for bots"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = {text = "MIT"}
 authors = []
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -13,24 +13,34 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14"
 ]
 
-[project.dependencies]
-fastapi = ">=0.100.0"
-uvicorn = ">=0.20.0"
-psutil = ">=5.9.0"
-requests = ">=2.31.0"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "psutil>=5.9.0",
+    "httpx>=0.24.0",
+    "aiosqlite>=0.19.0",
+    "cryptography>=41.0.0",
+    "openai>=1.0.0",
+    "anthropic>=0.20.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.6",
+    "mcp>=1.0.0",
+]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "ruff>=0.2.0",
 ]
 
 [project.scripts]
 botgateway = "botgateway.cli.botgateway:main"
 botcli = "botgateway.cli.botcli:main"
+openbot = "botgateway.cli.openbot:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -46,6 +56,7 @@ ignore = []
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"
 
 [build-system]
 requires = ["setuptools>=61.0"]

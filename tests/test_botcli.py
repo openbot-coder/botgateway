@@ -1,9 +1,10 @@
 """Test botcli module"""
 
 import json
-import pytest
-from unittest.mock import MagicMock, patch
 from io import StringIO
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from botgateway.cli.botcli import cmd_health, cmd_status
 
@@ -144,7 +145,7 @@ class TestCmdStatus:
         mock_error = URLError("Connection refused")
 
         with patch('botgateway.cli.botcli.urlopen', side_effect=mock_error):
-            with patch('sys.stderr', new=StringIO()) as fake_err:
+            with patch('sys.stderr', new=StringIO()):
                 with pytest.raises(SystemExit) as exc_info:
                     cmd_health(args)
                 assert exc_info.value.code == 1
